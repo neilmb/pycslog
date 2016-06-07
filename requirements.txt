@@ -1,3 +1,4 @@
 flask
 nose
 rednose
+tox

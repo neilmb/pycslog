@@ -19,11 +19,9 @@
 import json
 
 from flask import Flask, request
-from flask.ext.script import Manager
 
 
 app = Flask(__name__)
-manager = Manager(app)
 
 
 class Log(object):
@@ -54,8 +52,9 @@ def log_contact():
 
 @app.route('/contact/<contact_id>')
 def get_contact(contact_id):
-    return json.dumps(dict([('id', contact_id)] +
-                            LOG.get_contact(contact_id).items()))
+    contact = LOG.get_contact(contact_id)
+    contact['id'] = contact_id
+    return json.dumps(contact)
 
 @app.route('/contacts')
 def get_contacts():
