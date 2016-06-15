@@ -1,5 +1,9 @@
+coverage
 flask
 nose
 prospector
 rednose
+requests
+six
 tox
+wsgi_intercept
