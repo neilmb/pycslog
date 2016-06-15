@@ -82,7 +82,3 @@ under certain conditions; type 'show c' for details.
         # lines should be of the form "callsign exchange"
         call, exchange = line.split(' ', 1)
         self._post('contact', data={'call': call, 'exchange': exchange})
-
-if __name__ == '__main__':
-    CmdClient().cmdloop()
-

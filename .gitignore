@@ -9,6 +9,7 @@
 
 # nose test coverage info
 .coverage
+/cover/
 
 # multiple test envs
 .tox
