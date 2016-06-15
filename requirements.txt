@@ -1,4 +1,5 @@
 flask
 nose
+prospector
 rednose
 tox

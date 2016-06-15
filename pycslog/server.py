@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Pycslog.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Basic in-memory log server."""
+
 import json
 
 from flask import Flask, request
@@ -29,22 +31,27 @@ class Log(object):
     """Represent a single log of contacts."""
 
     def __init__(self):
+        """Log using a list for storage."""
         self._contacts = []
 
     def log_contact(self, call, exchange):
+        """Save a single contact."""
         self._contacts.append({'call': call, 'exchange': exchange})
         return len(self._contacts) - 1
 
     def contacts(self):
+        """Get a list of contacts."""
         return self._contacts
 
     def get_contact(self, contact_id):
+        """Return a single contact by id."""
         return self._contacts[int(contact_id)]
 
 LOG = Log()
 
 @app.route('/contact', methods=['POST'])
 def log_contact():
+    """Log a single contact."""
     call = request.form.get('call', None)
     exchange = request.form.get('exchange', None)
     contact_id = LOG.log_contact(call, exchange)
@@ -52,10 +59,12 @@ def log_contact():
 
 @app.route('/contact/<contact_id>')
 def get_contact(contact_id):
+    """Retrieve a contact by ID."""
     contact = LOG.get_contact(contact_id)
     contact['id'] = contact_id
     return json.dumps(contact)
 
 @app.route('/contacts')
 def get_contacts():
+    """List all contacts."""
     return json.dumps(LOG.contacts())
