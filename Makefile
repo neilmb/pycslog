@@ -5,4 +5,4 @@ nose:
 	nosetests --with-coverage
 
 lint:
-	prospector -M
+	prospector -M -F

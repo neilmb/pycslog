@@ -46,8 +46,8 @@ class Log(object):
     def get_contact(self, contact_id):
         """Return a single contact by id."""
         return self._contacts[int(contact_id)]
-
 LOG = Log()
+
 
 @app.route('/contact', methods=['POST'])
 def log_contact():
@@ -57,12 +57,14 @@ def log_contact():
     contact_id = LOG.log_contact(call, exchange)
     return json.dumps({'id': contact_id})
 
+
 @app.route('/contact/<contact_id>')
 def get_contact(contact_id):
     """Retrieve a contact by ID."""
     contact = LOG.get_contact(contact_id)
     contact['id'] = contact_id
     return json.dumps(contact)
+
 
 @app.route('/contacts')
 def get_contacts():

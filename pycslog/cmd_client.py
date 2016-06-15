@@ -23,6 +23,7 @@ import cmd
 from requests import get, post
 from six.moves.urllib.parse import urljoin  # noqa
 
+
 class CmdClient(cmd.Cmd):
 
     """Line oriented logging client."""
