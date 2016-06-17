@@ -38,6 +38,7 @@ class Contact(object):  # noqa
 
         # Frequency should be in kHz, not MHz
         if frequency is not None:
+            frequency = float(frequency)
             if frequency < 100:
                 self.frequency = int(1000*frequency)
             else:
@@ -51,7 +52,7 @@ class Contact(object):  # noqa
         return {'call': self.call,
                 'exchange': self.exchange,
                 'frequency': str(self.frequency),
-                'time': self.time.isoformat()}
+                'time': self.time.strftime("%Y-%m-%d %H:%M:%S")}
 
 
 class Log(object):

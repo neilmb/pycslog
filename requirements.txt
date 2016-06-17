@@ -5,5 +5,6 @@ prospector
 rednose
 requests
 six
+tabulate
 tox
 wsgi_intercept

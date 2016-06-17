@@ -17,7 +17,7 @@
 
 from six import StringIO
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_regexp_matches
 from wsgi_intercept import (requests_intercept,
                             add_wsgi_intercept,
                             remove_wsgi_intercept,
@@ -64,7 +64,7 @@ class TestCmdClient:
 
     def test_list(self):
         output = self.run_commands('n0fn 599\nlist\n')
-        assert output.endswith('n0fn 599\n> '), output
+        assert_regexp_matches(output, '\s+14000\s+n0fn\s+599\n14000> ')
 
     def test_list_error(self):
         """List command fails with arguments"""
@@ -74,9 +74,25 @@ class TestCmdClient:
     def test_empty_input(self):
         """EOF does nothing"""
         output = self.run_commands('')
-        assert output == '> ', output
+        assert output == '14000> ', output
 
     def test_empty_line(self):
         """Empty line does nothing"""
         output = self.run_commands('\n')
-        assert output == '> > ', output
+        assert output == '14000> 14000> ', output
+
+    def test_frequency_change(self):
+        """Number changes frequency"""
+        output = self.run_commands('7000\n')
+        assert output.endswith('7000> ')
+
+    def test_list_multiple(self):
+        """List multiple contacts on different frequencies."""
+        output = self.run_commands("""7000
+n0fn 599
+14000
+n0fn 339
+list
+""")
+        assert "Time" in output
+        assert_regexp_matches(output, r'7000\s+n0fn\s+599')

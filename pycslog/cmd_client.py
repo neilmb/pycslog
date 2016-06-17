@@ -20,8 +20,10 @@
 from __future__ import print_function
 
 import cmd
+
 from requests import get, post
 from six.moves.urllib.parse import urljoin  # noqa
+from tabulate import tabulate
 
 
 class CmdClient(cmd.Cmd):
@@ -44,7 +46,7 @@ This is free software, and you are welcome to redistribute it
 under certain conditions; type 'show c' for details.
 """
 
-        self.prompt = '> '
+        self._set_frequency(14000)  # also sets prompt
 
     def _get(self, path, *args, **kwargs):
         """Helper for getting self.url + path."""
@@ -53,6 +55,11 @@ under certain conditions; type 'show c' for details.
     def _post(self, path, *args, **kwargs):
         """Helper for posting to self.url + path."""
         return post(urljoin(self.url, path), *args, **kwargs).json()
+
+    def _set_frequency(self, freq):
+        """Set the client's frequency"""
+        self.frequency = freq
+        self.prompt = '{}> '.format(self.frequency)
 
     def emptyline(self):
         """Don't repeat previous command."""
@@ -64,8 +71,14 @@ under certain conditions; type 'show c' for details.
             print('*** error: list takes no arguments', file=self.stdout)
             return
         contacts = self._get('contacts')
-        for contact in contacts:
-            print(contact['call'], contact['exchange'], file=self.stdout)
+        columns = ['time', 'frequency', 'call', 'exchange']
+        print(
+            tabulate(
+                [[contact[key] for key in columns] for contact in contacts],
+                headers=[column.title() for column in columns],
+            ),
+            file=self.stdout
+        )
 
     def do_quit(self, args):  # noqa
         """Quit entering contacts."""
@@ -80,6 +93,15 @@ under certain conditions; type 'show c' for details.
         if line == 'EOF':
             return True
 
+        try:
+            freq = int(line.split()[0])
+            self._set_frequency(freq)
+            return
+        except ValueError:
+            pass
+
         # lines should be of the form "callsign exchange"
         call, exchange = line.split(' ', 1)
-        self._post('contact', data={'call': call, 'exchange': exchange})
+        self._post('contact', data={'call': call,
+                                    'exchange': exchange,
+                                    'frequency': self.frequency})
