@@ -48,6 +48,10 @@ under certain conditions; type 'show c' for details.
 
         self._set_frequency(14000)  # also sets prompt
 
+    def _error(self, text):
+        """Print error text."""
+        print('*** error:', text, file=self.stdout)
+
     def _get(self, path, *args, **kwargs):
         """Helper for getting self.url + path."""
         return get(urljoin(self.url, path), *args, **kwargs).json()
@@ -68,7 +72,7 @@ under certain conditions; type 'show c' for details.
     def do_list(self, args):
         """List all contacts."""
         if args != '':
-            print('*** error: list takes no arguments', file=self.stdout)
+            self._error('list command takes no arguments.')
             return
         contacts = self._get('contacts')
         columns = ['time', 'frequency', 'call', 'exchange']
@@ -91,17 +95,22 @@ under certain conditions; type 'show c' for details.
         """This is where lines starting with callsigns get sent."""
 
         if line == 'EOF':
-            return
+            # True stops the interpreter
+            return True
 
         try:
             freq = int(line.split()[0])
             self._set_frequency(freq)
-            return
+            return False
         except ValueError:
             pass
 
         # lines should be of the form "callsign exchange"
-        call, exchange = line.split(' ', 1)
+        try:
+            call, exchange = line.split(' ', 1)
+        except ValueError:
+            self._error('not a contact, no exchange')
+            return False
         self._post('contact', data={'call': call,
                                     'exchange': exchange,
                                     'frequency': self.frequency})
