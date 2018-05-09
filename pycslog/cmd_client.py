@@ -30,9 +30,9 @@ class CmdClient(cmd.Cmd):
 
     """Line oriented logging client."""
 
-    def __init__(self, server='127.0.0.1', port=7373, *args, **kwargs):
+    def __init__(self, server='127.0.0.1', port=7373, **kwargs):
         """Initialize with the given server and port."""
-        cmd.Cmd.__init__(self, *args, **kwargs)
+        cmd.Cmd.__init__(self, **kwargs)
 
         self.server = server
         self.port = port
@@ -91,7 +91,7 @@ under certain conditions; type 'show c' for details.
         """This is where lines starting with callsigns get sent."""
 
         if line == 'EOF':
-            return True
+            return
 
         try:
             freq = int(line.split()[0])
