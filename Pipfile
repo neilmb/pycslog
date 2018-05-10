@@ -12,6 +12,7 @@ wsgi-intercept = "*"
 
 [dev-packages]
 coverage = "*"
+configparser = "*"
 nose = "*"
 prospector = "*"
 rednose = "*"
