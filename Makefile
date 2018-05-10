@@ -5,4 +5,4 @@ nose:
 	nosetests --with-coverage
 
 lint:
-	prospector -M -F
+	pylint pycslog run_cmd_client.py run_server.py setup.py

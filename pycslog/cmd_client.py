@@ -21,9 +21,13 @@ from __future__ import print_function
 
 import cmd
 
+from six.moves import urllib  # noqa
+
 from requests import get, post
-from six.moves.urllib.parse import urljoin  # noqa
 from tabulate import tabulate
+
+
+urljoin = urllib.parse.urljoin
 
 
 class CmdClient(cmd.Cmd):
@@ -88,7 +92,7 @@ under certain conditions; type 'show c' for details.
         """Quit entering contacts."""
         if args != '':
             print('*** error: quit takes no arguments', file=self.stdout)
-            return
+            return False
         return True
 
     def default(self, line):

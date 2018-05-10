@@ -1,3 +1,6 @@
+
+"""Pycslog is a client-server ham radio contest logger."""
+
 from setuptools import setup
 
 setup(

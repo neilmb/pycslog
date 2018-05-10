@@ -8,15 +8,18 @@ flask = "*"
 requests = "*"
 six = "*"
 tabulate = "*"
-wsgi-intercept = "*"
 
 [dev-packages]
+"backports.functools_lru_cache" = "*"  # for pylint dependency astroid under Python2
 coverage = "*"
-configparser = "*"
+configparser = "*"  # for pylint under Python2
+enum34 = "*"  # for pylint dependency astroid under Python2
 nose = "*"
-prospector = "*"
+pylint = "*"
 rednose = "*"
+singledispatch = "*"  # for pylint dependency astroid under Python2
 tox = "*"
+wsgi-intercept = "*"
 
 [requires]
 python_version = "3.6"
