@@ -20,9 +20,43 @@ import json
 
 from nose.tools import assert_equal
 
-from pycslog.server import app, LOG
+from pycslog.server import app, LOG, SqliteLog
 
-class TestServer(object):
+
+class TestSqliteLog:
+
+    def setup(self):
+        """Create an SQLite-backed log."""
+        self.log = SqliteLog()
+        self.id = self.log.log_contact('n0fn', '599', 14000)
+
+    def test_log_contact(self):
+        """Record a single contact"""
+        count = self.log.conn.cursor().execute(
+            'SELECT COUNT(*) FROM log').fetchone()[0]
+        assert self.id >= 0
+        assert count == 1, count
+
+    def test_get_contact(self):
+        """Get a contact by id"""
+        contact = self.log.get_contact(self.id)
+        assert 'time' in contact
+        assert_equal(contact['call'], 'n0fn')
+        assert_equal(contact['frequency'], 14000)
+        assert_equal(contact['exchange'], '599')
+
+    def test_contacts(self):
+        """List all contacts"""
+        contacts = self.log.contacts()
+        assert_equal(len(contacts), 1)
+        assert_equal(set(contacts[0].keys()),
+                     set(['time', 'call', 'exchange', 'frequency']))
+
+    def teardown(self):
+        """Clear the database."""
+        self.log.clear_log()
+
+class TestServer:
 
     def setup(self):
         """Set up a test server to make requests against."""
@@ -33,7 +67,7 @@ class TestServer(object):
 
     def teardown(self):
         """Clear log object."""
-        LOG._contacts = []
+        LOG.clear_log()
 
     def test_contact(self):
         """Record a contact"""
