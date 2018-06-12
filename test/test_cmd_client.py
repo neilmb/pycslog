@@ -18,10 +18,7 @@
 from six import StringIO
 
 from nose.tools import assert_equal, assert_regexp_matches
-from wsgi_intercept import (requests_intercept,
-                            add_wsgi_intercept,
-                            remove_wsgi_intercept,
-                           )
+from wsgi_intercept import interceptor
 
 from pycslog import cmd_client
 from pycslog.server import app
@@ -46,11 +43,11 @@ class TestCmdClient:
 
     def setup(self):
         """Set up a server for testing."""
-        requests_intercept.install()
-        add_wsgi_intercept('127.0.0.1', 7373, lambda: app)
+        self.intercept = interceptor.RequestsInterceptor(lambda: app, host='127.0.0.1', port=7373)
+        self.intercept.__enter__()
 
     def teardown(self):
-        remove_wsgi_intercept('127.0.0.1', 7373)
+        self.intercept.__exit__(None, None, None)
 
     def test_quit(self):
         """Quit command works"""
@@ -70,11 +67,6 @@ class TestCmdClient:
         """List command fails with arguments"""
         output = self.run_commands('list more stuff\n')
         assert '*** error' in output
-
-    def test_empty_input(self):
-        """EOF does nothing"""
-        output = self.run_commands('')
-        assert output == '14000> ', output
 
     def test_empty_line(self):
         """Empty line does nothing"""
@@ -96,3 +88,8 @@ list
 """)
         assert "Time" in output
         assert_regexp_matches(output, r'7000\s+n0fn\s+599')
+
+    def test_short_contact_error(self):
+        """Short line is an error."""
+        output = self.run_commands('show')
+        assert '*** error' in output

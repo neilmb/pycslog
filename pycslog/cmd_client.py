@@ -21,18 +21,22 @@ from __future__ import print_function
 
 import cmd
 
+from six.moves import urllib  # noqa
+
 from requests import get, post
-from six.moves.urllib.parse import urljoin  # noqa
 from tabulate import tabulate
+
+
+urljoin = urllib.parse.urljoin
 
 
 class CmdClient(cmd.Cmd):
 
     """Line oriented logging client."""
 
-    def __init__(self, server='127.0.0.1', port=7373, *args, **kwargs):
+    def __init__(self, server='127.0.0.1', port=7373, **kwargs):
         """Initialize with the given server and port."""
-        cmd.Cmd.__init__(self, *args, **kwargs)
+        cmd.Cmd.__init__(self, **kwargs)
 
         self.server = server
         self.port = port
@@ -47,6 +51,10 @@ under certain conditions; type 'show c' for details.
 """
 
         self._set_frequency(14000)  # also sets prompt
+
+    def _error(self, text):
+        """Print error text."""
+        print('*** error:', text, file=self.stdout)
 
     def _get(self, path, *args, **kwargs):
         """Helper for getting self.url + path."""
@@ -68,7 +76,7 @@ under certain conditions; type 'show c' for details.
     def do_list(self, args):
         """List all contacts."""
         if args != '':
-            print('*** error: list takes no arguments', file=self.stdout)
+            self._error('list command takes no arguments.')
             return
         contacts = self._get('contacts')
         columns = ['time', 'frequency', 'call', 'exchange']
@@ -84,24 +92,29 @@ under certain conditions; type 'show c' for details.
         """Quit entering contacts."""
         if args != '':
             print('*** error: quit takes no arguments', file=self.stdout)
-            return
+            return False
         return True
 
     def default(self, line):
         """This is where lines starting with callsigns get sent."""
 
         if line == 'EOF':
+            # True stops the interpreter
             return True
 
         try:
             freq = int(line.split()[0])
             self._set_frequency(freq)
-            return
+            return False
         except ValueError:
             pass
 
         # lines should be of the form "callsign exchange"
-        call, exchange = line.split(' ', 1)
+        try:
+            call, exchange = line.split(' ', 1)
+        except ValueError:
+            self._error('not a contact, no exchange')
+            return False
         self._post('contact', data={'call': call,
                                     'exchange': exchange,
                                     'frequency': self.frequency})

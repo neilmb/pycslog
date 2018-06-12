@@ -1,15 +1,11 @@
 [basic]
 const-rgx=(([A-Za-z_][A-Za-z0-9_]*)|(__.*__))$
 
-[typecheck]
-# These have interfaces generated at runtime, which prevents static checks
-ignored-modules=ujson,lxml.etree
-
 [messages control]
 # Disable the following PyLint messages:
 # W0141 - Bad Builtin
 # W0511 - Fixme (all todos, notes)
-disable=W0141,W0511
+disable=R0903,R0201,W0141,W0511
 
 [reports]
 # Available formats are text, parseable, colorized and html
