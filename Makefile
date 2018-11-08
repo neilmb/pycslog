@@ -5,4 +5,4 @@ nose:
 	nosetests --with-coverage
 
 lint:
-	pylint pycslog run_cmd_client.py run_server.py setup.py
+	pylint pycslog run_cmd_client.py setup.py

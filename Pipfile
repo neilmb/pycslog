@@ -8,6 +8,8 @@ flask = "*"
 requests = ">=2.20.0"
 six = "*"
 tabulate = "*"
+gunicorn = "*"
+eventlet = "*"
 
 [dev-packages]
 "backports.functools_lru_cache" = "*"  # for pylint dependency astroid under Python2

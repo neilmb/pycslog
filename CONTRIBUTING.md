@@ -30,8 +30,8 @@ pipenv shell
 
 This is an attempt at a "what-next" list, but in no particular order
 
-- Switch server to SQLite backend
-- Switch out flask development server for a better WSGI container: Gunicorn?
+- DONE: Switch server to SQLite backend
+- DONE: Switch out flask development server for a better WSGI container: Gunicorn?
 - Add mode and date/time fields to data store
 - Add /search endpoint to API for dupe checking
 - Make a React client that can be served by the same Flask app
