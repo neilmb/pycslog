@@ -31,7 +31,7 @@ from flask import Flask, request
 app = Flask(__name__)
 
 
-class Contact(object):  # noqa
+class Contact:  # noqa
 
     """Represent a single contact."""
 
@@ -59,7 +59,7 @@ class Contact(object):  # noqa
                 'time': self.time.strftime("%Y-%m-%d %H:%M:%S")}
 
 @add_metaclass(abc.ABCMeta)
-class LogInterface(object):
+class LogInterface:
 
     """Abstract base class for a contact log."""
 
