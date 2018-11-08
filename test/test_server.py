@@ -88,7 +88,7 @@ class TestServer:
     def setup(self):
         """Set up a test server to make requests against."""
         self.app = app.test_client()
-        self.app.post('/contact',
+        self.app.post('/api/contact',
                       data={'call': 'k3ng',
                             'exchange': '599'})
 
@@ -98,14 +98,14 @@ class TestServer:
 
     def test_contact(self):
         """Record a contact"""
-        result = self.app.post('/contact',
+        result = self.app.post('/api/contact',
                                data={'call': 'n0fn',
                                      'exchange': '599'})
         assert_equal(result.status_code, 200)
 
     def test_contact_id(self):
         """Retrieve a contact by id"""
-        result = self.app.get('/contact/1')
+        result = self.app.get('/api/contact/1')
         assert_equal(result.status_code, 200)
         returned = json.loads(result.get_data(as_text=True))
         assert_equal(returned['call'], 'k3ng')
@@ -113,7 +113,7 @@ class TestServer:
 
     def test_contacts(self):
         """Retrieve all contacts"""
-        result = self.app.get('/contacts')
+        result = self.app.get('/api/contacts')
         assert_equal(result.status_code, 200)
         returned = json.loads(result.get_data(as_text=True))
         assert_equal(len(returned), 1)
