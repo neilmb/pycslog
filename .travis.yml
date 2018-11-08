@@ -5,5 +5,7 @@ language: python
 python:
   - "3.5"
   - "3.6"
-install: pipenv sync
+install:
+  - pip install pipenv
+  - pipenv sync --dev
 script: make test
