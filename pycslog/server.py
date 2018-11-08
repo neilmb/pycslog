@@ -25,7 +25,7 @@ import sqlite3
 
 from six import add_metaclass
 
-from flask import Flask, request
+from flask import Flask, Blueprint, request
 
 
 app = Flask(__name__)
@@ -180,7 +180,10 @@ class SqliteLog(LogInterface):
 LOG = SqliteLog()
 
 
-@app.route('/contact', methods=['POST'])
+# serve the api from a sub-path /api/...
+api = Blueprint('api', __name__)
+
+@api.route('/contact', methods=['POST'])
 def log_contact():
     """Log a single contact."""
     call = request.form.get('call', None)
@@ -190,7 +193,7 @@ def log_contact():
     return json.dumps({'id': contact_id})
 
 
-@app.route('/contact/<contact_id>')
+@api.route('/contact/<contact_id>')
 def get_contact(contact_id):
     """Retrieve a contact by ID."""
     contact = LOG.get_contact(contact_id).serialize()
@@ -198,7 +201,9 @@ def get_contact(contact_id):
     return json.dumps(contact)
 
 
-@app.route('/contacts')
+@api.route('/contacts')
 def get_contacts():
     """List all contacts."""
     return json.dumps([contact.serialize() for contact in LOG.contacts()])
+
+app.register_blueprint(api, url_prefix='/api')

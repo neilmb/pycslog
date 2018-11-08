@@ -40,7 +40,7 @@ class CmdClient(cmd.Cmd):
 
         self.server = server
         self.port = port
-        self.url = 'http://{server}:{port}'.format(
+        self.url = 'http://{server}:{port}/api/'.format(
             server=self.server, port=self.port)
 
         self.intro = """
