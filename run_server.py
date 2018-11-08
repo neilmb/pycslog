@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2016, 2018 Neil Martinsen-Burrell
-
+# Copyright 2018 Neil Martinsen-Burrell
 # This file is part of Pycslog.
 
 # Pycslog is free software: you can redistribute it and/or modify

@@ -20,7 +20,14 @@
 
 """Run the command line client."""
 
+from argparse import ArgumentParser
+
 from pycslog.cmd_client import CmdClient
 
 if __name__ == '__main__':
-    CmdClient().cmdloop()
+    parser = ArgumentParser()
+    parser.add_argument('--server', default='127.0.0.1')
+    parser.add_argument('--port', default=7373)
+    args = parser.parse_args()
+
+    CmdClient(server=args.server, port=args.port).cmdloop()

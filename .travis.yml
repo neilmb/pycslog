@@ -3,9 +3,9 @@ sudo: false
 
 language: python
 python:
-  - "2.7"
-  - "3.4"
   - "3.5"
   - "3.6"
-install: pip install tox-travis
-script: tox
+install:
+  - pip install pipenv
+  - pipenv sync --dev
+script: pipenv run make test
