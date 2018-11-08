@@ -20,8 +20,37 @@ import json
 
 from nose.tools import assert_equal
 
-from pycslog.server import app, LOG, SqliteLog
+from pycslog.server import app, LOG, SqliteLog, MemoryLog
 
+
+class TestMemoryLog:
+
+    def setup(self):
+        """Create an SQLite-backed log."""
+        self.log = MemoryLog()
+        self.id = self.log.log_contact('n0fn', '599', 14000)
+
+    def test_log_contact(self):
+        """Record a single contact"""
+        assert self.id >= 0
+        assert len(self.log.contacts()) == 1
+
+    def test_get_contact(self):
+        """Get a contact by id"""
+        contact = self.log.get_contact(self.id)
+        assert contact.time
+        assert_equal(contact.call, 'n0fn')
+        assert_equal(contact.frequency, 14000)
+        assert_equal(contact.exchange, '599')
+
+    def test_contacts(self):
+        """List all contacts"""
+        contacts = self.log.contacts()
+        assert_equal(len(contacts), 1)
+
+    def teardown(self):
+        """Clear the database."""
+        self.log.clear_log()
 
 class TestSqliteLog:
 
@@ -40,17 +69,15 @@ class TestSqliteLog:
     def test_get_contact(self):
         """Get a contact by id"""
         contact = self.log.get_contact(self.id)
-        assert 'time' in contact
-        assert_equal(contact['call'], 'n0fn')
-        assert_equal(contact['frequency'], 14000)
-        assert_equal(contact['exchange'], '599')
+        assert contact.time
+        assert_equal(contact.call, 'n0fn')
+        assert_equal(contact.frequency, 14000)
+        assert_equal(contact.exchange, '599')
 
     def test_contacts(self):
         """List all contacts"""
         contacts = self.log.contacts()
         assert_equal(len(contacts), 1)
-        assert_equal(set(contacts[0].keys()),
-                     set(['time', 'call', 'exchange', 'frequency']))
 
     def teardown(self):
         """Clear the database."""
@@ -78,7 +105,7 @@ class TestServer:
 
     def test_contact_id(self):
         """Retrieve a contact by id"""
-        result = self.app.get('/contact/0')
+        result = self.app.get('/contact/1')
         assert_equal(result.status_code, 200)
         returned = json.loads(result.get_data(as_text=True))
         assert_equal(returned['call'], 'k3ng')

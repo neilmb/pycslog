@@ -119,7 +119,7 @@ class SqliteLog(LogInterface):
     """Store a log of contacts in a SQLite database."""
 
     def __init__(self, filename='pycslog.db'):
-        self.conn = sqlite3.connect(filename)
+        self.conn = sqlite3.connect(filename, check_same_thread=False)
         self.cursor = self.conn.cursor()
         try:
             self._create_table()
@@ -129,14 +129,14 @@ class SqliteLog(LogInterface):
             self.conn.commit()
 
     @staticmethod
-    def _to_dict(row):
+    def _to_contact(row):
         """Convert a row of the database to a dict."""
-        return {
-            'time': row[0],
+        return Contact(**{
+            'time': datetime.datetime.strptime(row[0], '%Y-%m-%dT%H:%M:%S.%f'),
             'frequency': row[1],
             'call': row[2],
             'exchange': row[3],
-        }
+        })
 
     def log_contact(self, call, exchange, frequency):
         """Save a contact row."""
@@ -152,12 +152,12 @@ class SqliteLog(LogInterface):
 
     def contacts(self):
         """Get a list of contacts."""
-        result = self.cursor.execute('SELECT * from log')
-        return list(map(self._to_dict, result))
+        result = self.cursor.execute('SELECT time, frequency, call, exchange FROM log')
+        return list(map(self._to_contact, result))
 
     def get_contact(self, contact_id):
         """Get a single contact by ID."""
-        return self._to_dict(
+        return self._to_contact(
             self.cursor.execute(
                 'SELECT time, frequency, call, exchange FROM log '
                 'WHERE id=?', (contact_id,)).fetchone())
@@ -177,7 +177,7 @@ class SqliteLog(LogInterface):
         self.conn.commit()
 
 
-LOG = MemoryLog()
+LOG = SqliteLog()
 
 
 @app.route('/contact', methods=['POST'])
