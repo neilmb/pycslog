@@ -18,8 +18,12 @@
 
 """Basic in-memory log server."""
 
+import abc
 import datetime
 import json
+import sqlite3
+
+from six import add_metaclass
 
 from flask import Flask, request
 
@@ -54,14 +58,39 @@ class Contact(object):  # noqa
                 'frequency': str(self.frequency),
                 'time': self.time.strftime("%Y-%m-%d %H:%M:%S")}
 
+@add_metaclass(abc.ABCMeta)
+class LogInterface(object):
 
-class Log(object):
+    """Abstract base class for a contact log."""
 
-    """Represent a single log of contacts."""
+    @abc.abstractmethod
+    def log_contact(self, call, exchange, frequency):
+        """Save a single contact."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def contacts(self):
+        """Get a list of all contacts."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_contact(self, contact_id):
+        """Get a single contact by ID."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def clear_log(self):
+        """Clear the log."""
+        raise NotImplementedError
+
+
+class MemoryLog(LogInterface):
+
+    """Store a log of contacts in a list in memory."""
 
     def __init__(self):
         """Log using a list for storage."""
-        self._contacts = []
+        self.clear_log()
 
     def log_contact(self, call, exchange, frequency):
         """Save a single contact."""
@@ -79,7 +108,76 @@ class Log(object):
     def get_contact(self, contact_id):
         """Return a single contact by id."""
         return self._contacts[int(contact_id)]
-LOG = Log()
+
+    def clear_log(self):
+        """Clear the log."""
+        self._contacts = []
+
+
+class SqliteLog(LogInterface):
+
+    """Store a log of contacts in a SQLite database."""
+
+    def __init__(self, filename='pycslog.db'):
+        self.conn = sqlite3.connect(filename)
+        self.cursor = self.conn.cursor()
+        try:
+            self._create_table()
+        except sqlite3.OperationalError:
+            self.conn.rollback()
+        finally:
+            self.conn.commit()
+
+    @staticmethod
+    def _to_dict(row):
+        """Convert a row of the database to a dict."""
+        return {
+            'time': row[0],
+            'frequency': row[1],
+            'call': row[2],
+            'exchange': row[3],
+        }
+
+    def log_contact(self, call, exchange, frequency):
+        """Save a contact row."""
+        time = datetime.datetime.utcnow().isoformat()
+        result = self.cursor.execute(
+            'INSERT INTO log (time, frequency, call, exchange) '
+            'VALUES (?, ?, ?, ?)',
+            (time, frequency, call, exchange)
+        )
+        last_id = result.lastrowid
+        self.conn.commit()
+        return last_id
+
+    def contacts(self):
+        """Get a list of contacts."""
+        result = self.cursor.execute('SELECT * from log')
+        return list(map(self._to_dict, result))
+
+    def get_contact(self, contact_id):
+        """Get a single contact by ID."""
+        return self._to_dict(
+            self.cursor.execute(
+                'SELECT time, frequency, call, exchange FROM log '
+                'WHERE id=?', (contact_id,)).fetchone())
+
+    def _create_table(self):
+        """Make the log table again."""
+        self.cursor.execute(
+            'CREATE TABLE log '
+            '(id integer primary key, '
+            'time time, frequency integer, call text, exchange text)'
+        )
+
+    def clear_log(self):
+        """Clear the log table."""
+        self.cursor.execute('DROP TABLE log')
+        self._create_table()
+        self.conn.commit()
+
+
+LOG = MemoryLog()
 
 
 @app.route('/contact', methods=['POST'])
