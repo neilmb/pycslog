@@ -8,4 +8,4 @@ python:
 install:
   - pip install pipenv
   - pipenv sync --dev
-script: make test
+script: pipenv run make test
