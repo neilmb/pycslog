@@ -61,7 +61,8 @@ class TestCmdClient:
 
     def test_list(self):
         output = self.run_commands('n0fn 599\nlist\n')
-        assert_regexp_matches(output, '\s+14000\s+n0fn\s+599\n14000> ')
+        assert_regexp_matches(output, '\s+Time\s+Frequency\s+Mode\s+Call\s+Exchange')
+        assert_regexp_matches(output, '\s+14000\s+PH\s+n0fn\s+599\n14000')
 
     def test_list_error(self):
         """List command fails with arguments"""
@@ -71,23 +72,39 @@ class TestCmdClient:
     def test_empty_line(self):
         """Empty line does nothing"""
         output = self.run_commands('\n')
-        assert output == '14000> 14000> ', output
+        assert output == '14000:PH> 14000:PH> ', output
 
     def test_frequency_change(self):
         """Number changes frequency"""
         output = self.run_commands('7000\n')
-        assert output.endswith('7000> ')
+        assert output.split()[-1].startswith('7000')
+
+    def test_mode_change(self):
+        """ph or cw changes mode"""
+        output = self.run_commands('cw\n')
+        assert output.endswith('CW> ')
+        output = self.run_commands('Ph\n')
+        assert output.endswith('PH> ')
+
+    def test_all_modes(self):
+        """try all the different modes"""
+        output = self.run_commands('cw\nph\nfm\nry\ndg\n')
+        assert output.endswith('DG> ')
+        output = self.run_commands('nm\n')
+        assert 'error' in output
 
     def test_list_multiple(self):
         """List multiple contacts on different frequencies."""
         output = self.run_commands("""7000
 n0fn 599
 14000
+CW
 n0fn 339
 list
 """)
         assert "Time" in output
-        assert_regexp_matches(output, r'7000\s+n0fn\s+599')
+        assert_regexp_matches(output, r'7000\s+PH\s+n0fn\s+599')
+        assert_regexp_matches(output, r'14000\s+CW\s+n0fn\s+339')
 
     def test_short_contact_error(self):
         """Short line is an error."""
