@@ -83,6 +83,10 @@ class LogInterface:
         """Clear the log."""
         raise NotImplementedError
 
+    def search(self, search_term):
+        """Search contacts for the term."""
+        raise NotImplementedError
+
 
 class MemoryLog(LogInterface):
 
@@ -112,6 +116,12 @@ class MemoryLog(LogInterface):
     def clear_log(self):
         """Clear the log."""
         self._contacts = []
+
+    def search(self, search_term):
+        """Return contacts that match a search term."""
+        if not search_term:
+            return []
+        return [contact for contact in self._contacts if search_term in contact.call]
 
 
 class SqliteLog(LogInterface):
@@ -176,6 +186,15 @@ class SqliteLog(LogInterface):
         self._create_table()
         self.conn.commit()
 
+    def search(self, search_term):
+        """Search for a call sign fragment."""
+        if not search_term:
+            return []
+        search_term = '%' + search_term + '%'
+        result = self.cursor.execute('SELECT time, frequency, call, exchange FROM log '
+                                     "WHERE call LIKE ?", (search_term,)).fetchall()
+        return list(map(self._to_contact, result))
+
 
 LOG = SqliteLog()
 
@@ -205,5 +224,11 @@ def get_contact(contact_id):
 def get_contacts():
     """List all contacts."""
     return json.dumps([contact.serialize() for contact in LOG.contacts()])
+
+
+@api.route('/search/<search_term>')
+def search_contacts(search_term):
+    """Return contacts that match a search term."""
+    return json.dumps([contact.serialize() for contact in LOG.search(search_term)])
 
 app.register_blueprint(api, url_prefix='/api')
