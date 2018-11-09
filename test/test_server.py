@@ -48,6 +48,13 @@ class TestMemoryLog:
         contacts = self.log.contacts()
         assert_equal(len(contacts), 1)
 
+    def test_search(self):
+        """Search for a contact."""
+        assert_equal(len(self.log.search('n0')), 1)
+        assert_equal(len(self.log.search('n')), 1)
+        assert_equal(len(self.log.search('n0fnp')), 0)
+        assert_equal(len(self.log.search('')), 0)
+
     def teardown(self):
         """Clear the database."""
         self.log.clear_log()
@@ -78,6 +85,13 @@ class TestSqliteLog:
         """List all contacts"""
         contacts = self.log.contacts()
         assert_equal(len(contacts), 1)
+
+    def test_search(self):
+        """Search for a contact."""
+        assert_equal(len(self.log.search('n0')), 1)
+        assert_equal(len(self.log.search('n')), 1)
+        assert_equal(len(self.log.search('n0fnp')), 0)
+        assert_equal(len(self.log.search('')), 0)
 
     def teardown(self):
         """Clear the database."""
@@ -117,3 +131,11 @@ class TestServer:
         assert_equal(result.status_code, 200)
         returned = json.loads(result.get_data(as_text=True))
         assert_equal(len(returned), 1)
+
+    def test_search(self):
+        """Search for a contact."""
+        result = self.app.get('/api/search/k3ng')
+        assert_equal(result.status_code, 200)
+        returned = json.loads(result.get_data(as_text=True))
+        assert_equal(len(returned), 1)
+

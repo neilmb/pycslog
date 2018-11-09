@@ -32,8 +32,8 @@ This is an attempt at a "what-next" list, but in no particular order
 
 - DONE: Switch server to SQLite backend
 - DONE: Switch out flask development server for a better WSGI container: Gunicorn?
+- DONE: Add /search endpoint to API for dupe checking
 - Add mode and date/time fields to data store
-- Add /search endpoint to API for dupe checking
 - Make a React client that can be served by the same Flask app
 - Reduce python dependencies in requirements.txt to a minimum (bottle?)
 - Add POST to /contact/<id> to allow editing an existing contact
