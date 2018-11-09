@@ -21,7 +21,8 @@ import json
 
 from nose.tools import assert_equal
 
-from pycslog.server import app, LOG, SqliteLog, MemoryLog, Contact
+from pycslog.server import LOG, SqliteLog, MemoryLog, Contact
+from pycslog.webapp import app
 
 
 class TestMemoryLog:

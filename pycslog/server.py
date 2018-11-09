@@ -25,10 +25,7 @@ import sqlite3
 
 from six import add_metaclass
 
-from flask import Flask, Blueprint, request
-
-
-app = Flask(__name__)
+from flask import Blueprint, request
 
 
 class Contact:  # noqa
@@ -237,5 +234,3 @@ def get_contacts():
 def search_contacts(search_term):
     """Return contacts that match a search term."""
     return json.dumps([contact.serialize() for contact in LOG.search(search_term)])
-
-app.register_blueprint(api, url_prefix='/api')

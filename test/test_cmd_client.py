@@ -21,7 +21,7 @@ from nose.tools import assert_equal, assert_regexp_matches
 from wsgi_intercept import interceptor
 
 from pycslog import cmd_client
-from pycslog.server import app
+from pycslog.webapp import app
 
 class TestCmdClient:
 
