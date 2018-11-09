@@ -34,6 +34,8 @@ class CmdClient(cmd.Cmd):
 
     """Line oriented logging client."""
 
+    MODES = ['PH', 'CW', 'FM', 'RY', 'DG']
+
     def __init__(self, server='127.0.0.1', port=7373, **kwargs):
         """Initialize with the given server and port."""
         cmd.Cmd.__init__(self, **kwargs)
@@ -50,7 +52,11 @@ This is free software, and you are welcome to redistribute it
 under certain conditions; type 'show c' for details.
 """
 
+        self.frequency = None
+        self.mode = None
+
         self._set_frequency(14000)  # also sets prompt
+        self._set_mode('PH')
 
     def _error(self, text):
         """Print error text."""
@@ -64,10 +70,19 @@ under certain conditions; type 'show c' for details.
         """Helper for posting to self.url + path."""
         return post(urljoin(self.url, path), *args, **kwargs).json()
 
+    def _set_prompt(self):
+        """Set prompt based on current frequency and mode."""
+        self.prompt = '{}:{}> '.format(self.frequency, self.mode)
+
     def _set_frequency(self, freq):
         """Set the client's frequency"""
         self.frequency = freq
-        self.prompt = '{}> '.format(self.frequency)
+        self._set_prompt()
+
+    def _set_mode(self, mode):
+        """Set the client's mode"""
+        self.mode = mode.upper()
+        self._set_prompt()
 
     def emptyline(self):
         """Don't repeat previous command."""
@@ -79,7 +94,7 @@ under certain conditions; type 'show c' for details.
             self._error('list command takes no arguments.')
             return
         contacts = self._get('contacts')
-        columns = ['time', 'frequency', 'call', 'exchange']
+        columns = ['time', 'frequency', 'mode', 'call', 'exchange']
         print(
             tabulate(
                 [[contact[key] for key in columns] for contact in contacts],
@@ -109,6 +124,11 @@ under certain conditions; type 'show c' for details.
         except ValueError:
             pass
 
+        # line could be a mode
+        if line.upper() in self.MODES:
+            self._set_mode(line)
+            return False
+
         # lines should be of the form "callsign exchange"
         try:
             call, exchange = line.split(' ', 1)
@@ -117,4 +137,5 @@ under certain conditions; type 'show c' for details.
             return False
         self._post('contact', data={'call': call,
                                     'exchange': exchange,
-                                    'frequency': self.frequency})
+                                    'frequency': self.frequency,
+                                    'mode': self.mode})

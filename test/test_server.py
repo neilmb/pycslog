@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Pycslog.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import json
 
 from nose.tools import assert_equal
 
-from pycslog.server import app, LOG, SqliteLog, MemoryLog
+from pycslog.server import app, LOG, SqliteLog, MemoryLog, Contact
 
 
 class TestMemoryLog:
@@ -28,7 +29,7 @@ class TestMemoryLog:
     def setup(self):
         """Create an SQLite-backed log."""
         self.log = MemoryLog()
-        self.id = self.log.log_contact('n0fn', '599', 14000)
+        self.id = self.log.log_contact('n0fn', '599', 14000, 'PH')
 
     def test_log_contact(self):
         """Record a single contact"""
@@ -42,6 +43,7 @@ class TestMemoryLog:
         assert_equal(contact.call, 'n0fn')
         assert_equal(contact.frequency, 14000)
         assert_equal(contact.exchange, '599')
+        assert_equal(contact.mode, 'PH')
 
     def test_contacts(self):
         """List all contacts"""
@@ -64,7 +66,7 @@ class TestSqliteLog:
     def setup(self):
         """Create an SQLite-backed log."""
         self.log = SqliteLog()
-        self.id = self.log.log_contact('n0fn', '599', 14000)
+        self.id = self.log.log_contact('n0fn', '599', 14000, 'PH')
 
     def test_log_contact(self):
         """Record a single contact"""
@@ -80,6 +82,7 @@ class TestSqliteLog:
         assert_equal(contact.call, 'n0fn')
         assert_equal(contact.frequency, 14000)
         assert_equal(contact.exchange, '599')
+        assert_equal(contact.mode, 'PH')
 
     def test_contacts(self):
         """List all contacts"""
@@ -124,6 +127,8 @@ class TestServer:
         returned = json.loads(result.get_data(as_text=True))
         assert_equal(returned['call'], 'k3ng')
         assert_equal(returned['exchange'], '599')
+        for field in ['call', 'time', 'exchange', 'frequency', 'mode']:
+            assert field in returned
 
     def test_contacts(self):
         """Retrieve all contacts"""
@@ -139,3 +144,14 @@ class TestServer:
         returned = json.loads(result.get_data(as_text=True))
         assert_equal(len(returned), 1)
 
+
+class test_contact:
+
+    def test_serialize(self):
+        serialized_dict = Contact(call='n0fn',
+                                  mode='PH',
+                                  exchange='599',
+                                  time=datetime.datetime.utcnow(),
+                                  frequency=5000).serialize()
+        for field in ['call', 'mode', 'exchange', 'time', 'frequency']:
+            assert field in serialized_dict

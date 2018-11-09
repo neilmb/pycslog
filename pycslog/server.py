@@ -35,7 +35,9 @@ class Contact:  # noqa
 
     """Represent a single contact."""
 
-    def __init__(self, call=None, exchange=None, frequency=None, time=None):
+    # pylint: disable=too-many-arguments
+    def __init__(self, call=None, exchange=None, frequency=None,
+                 time=None, mode=None):
         """Create a contact with the given information."""
         self.call = call
         self.exchange = exchange
@@ -50,13 +52,15 @@ class Contact:  # noqa
         else:
             self.frequency = None
         self.time = time
+        self.mode = mode
 
     def serialize(self):
         """Return a serializable object for this contact."""
         return {'call': self.call,
                 'exchange': self.exchange,
                 'frequency': str(self.frequency),
-                'time': self.time.strftime("%Y-%m-%d %H:%M:%S")}
+                'time': self.time.strftime("%Y-%m-%d %H:%M:%S"),
+                'mode': self.mode}
 
 @add_metaclass(abc.ABCMeta)
 class LogInterface:
@@ -64,7 +68,7 @@ class LogInterface:
     """Abstract base class for a contact log."""
 
     @abc.abstractmethod
-    def log_contact(self, call, exchange, frequency):
+    def log_contact(self, call, exchange, frequency, mode):
         """Save a single contact."""
         raise NotImplementedError
 
@@ -96,13 +100,14 @@ class MemoryLog(LogInterface):
         """Log using a list for storage."""
         self.clear_log()
 
-    def log_contact(self, call, exchange, frequency):
+    def log_contact(self, call, exchange, frequency, mode):
         """Save a single contact."""
         current_time = datetime.datetime.utcnow()
         self._contacts.append(Contact(call=call,
                                       exchange=exchange,
                                       frequency=frequency,
-                                      time=current_time))
+                                      time=current_time,
+                                      mode=mode))
         return len(self._contacts) - 1
 
     def contacts(self):
@@ -146,15 +151,16 @@ class SqliteLog(LogInterface):
             'frequency': row[1],
             'call': row[2],
             'exchange': row[3],
+            'mode': row[4],
         })
 
-    def log_contact(self, call, exchange, frequency):
+    def log_contact(self, call, exchange, frequency, mode):
         """Save a contact row."""
         time = datetime.datetime.utcnow().isoformat()
         result = self.cursor.execute(
-            'INSERT INTO log (time, frequency, call, exchange) '
-            'VALUES (?, ?, ?, ?)',
-            (time, frequency, call, exchange)
+            'INSERT INTO log (time, frequency, call, exchange, mode) '
+            'VALUES (?, ?, ?, ?, ?)',
+            (time, frequency, call, exchange, mode)
         )
         last_id = result.lastrowid
         self.conn.commit()
@@ -162,14 +168,14 @@ class SqliteLog(LogInterface):
 
     def contacts(self):
         """Get a list of contacts."""
-        result = self.cursor.execute('SELECT time, frequency, call, exchange FROM log')
+        result = self.cursor.execute('SELECT time, frequency, call, exchange, mode FROM log')
         return list(map(self._to_contact, result))
 
     def get_contact(self, contact_id):
         """Get a single contact by ID."""
         return self._to_contact(
             self.cursor.execute(
-                'SELECT time, frequency, call, exchange FROM log '
+                'SELECT time, frequency, call, exchange, mode FROM log '
                 'WHERE id=?', (contact_id,)).fetchone())
 
     def _create_table(self):
@@ -177,7 +183,7 @@ class SqliteLog(LogInterface):
         self.cursor.execute(
             'CREATE TABLE log '
             '(id integer primary key, '
-            'time time, frequency integer, call text, exchange text)'
+            'time time, frequency integer, call text, exchange text, mode text)'
         )
 
     def clear_log(self):
@@ -191,7 +197,7 @@ class SqliteLog(LogInterface):
         if not search_term:
             return []
         search_term = '%' + search_term + '%'
-        result = self.cursor.execute('SELECT time, frequency, call, exchange FROM log '
+        result = self.cursor.execute('SELECT time, frequency, call, exchange, mode FROM log '
                                      "WHERE call LIKE ?", (search_term,)).fetchall()
         return list(map(self._to_contact, result))
 
@@ -208,7 +214,8 @@ def log_contact():
     call = request.form.get('call', None)
     exchange = request.form.get('exchange', None)
     frequency = request.form.get('frequency', None)
-    contact_id = LOG.log_contact(call, exchange, frequency)
+    mode = request.form.get('mode', None)
+    contact_id = LOG.log_contact(call, exchange, frequency, mode)
     return json.dumps({'id': contact_id})
 
 
