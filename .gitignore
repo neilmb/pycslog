@@ -13,3 +13,4 @@
 
 # multiple test envs
 .tox
+node_modules/

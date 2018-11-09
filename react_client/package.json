@@ -1,0 +1,47 @@
+{
+  "name": "pycslog_client",
+  "version": "0.0.1",
+  "description": "pycslog is a logging program",
+  "main": "main.js",
+  "scripts": {
+    "build": "webpack -p --progress --config webpack.config.js",
+    "dev-build": "webpack --progress -d --config webpack.config.js",
+    "watch": "webpack --progress -d --config webpack.config.js --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neilmb/pycslog.git"
+  },
+  "author": "",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/neilmb/pycslog/issues"
+  },
+  "homepage": "https://github.com/neilmb/pycslog#readme",
+  "dependencies": {
+    "bootstrap": "^4.1.0",
+    "jquery": "^3.3.1",
+    "npm": "^5.10.0",
+    "popper.js": "^1.14.3",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "react-icons": "^2.2.7"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "css-loader": "^0.28.11",
+    "style-loader": "^0.21.0",
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.1"
+  },
+  "babel": {
+    "presets": [
+      "env",
+      "react"
+    ]
+  }
+}
