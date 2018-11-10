@@ -17,6 +17,8 @@
 
 from six import StringIO
 
+import re
+
 from nose.tools import assert_equal, assert_regexp_matches
 from wsgi_intercept import interceptor
 
@@ -61,8 +63,8 @@ class TestCmdClient:
 
     def test_list(self):
         output = self.run_commands('n0fn 599\nlist\n')
-        assert_regexp_matches(output, '\s+Time\s+Frequency\s+Mode\s+Call\s+Exchange')
-        assert_regexp_matches(output, '\s+14000\s+PH\s+n0fn\s+599\n14000')
+        assert re.search(r'\s+Time\s+Frequency\s+Mode\s+Call\s+Exchange', output)
+        assert re.search(r'\s+14000\s+PH\s+n0fn\s+599\n14000', output)
 
     def test_list_error(self):
         """List command fails with arguments"""
@@ -103,8 +105,8 @@ n0fn 339
 list
 """)
         assert "Time" in output
-        assert_regexp_matches(output, r'7000\s+PH\s+n0fn\s+599')
-        assert_regexp_matches(output, r'14000\s+CW\s+n0fn\s+339')
+        assert re.search(r'7000\s+PH\s+n0fn\s+599', output)
+        assert re.search(r'14000\s+CW\s+n0fn\s+339', output)
 
     def test_short_contact_error(self):
         """Short line is an error."""

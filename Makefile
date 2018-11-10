@@ -1,8 +1,8 @@
 .PHONY: test
-test: nose lint
+test: pytest lint
 
-nose:
-	nosetests --with-coverage
+pytest:
+	py.test --cov=pycslog --cov-report term-missing test/
 
 lint:
 	pylint pycslog run_cmd_client.py setup.py

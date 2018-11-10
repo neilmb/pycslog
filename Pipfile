@@ -12,16 +12,11 @@ gunicorn = "*"
 eventlet = "*"
 
 [dev-packages]
-"backports.functools_lru_cache" = "*"  # for pylint dependency astroid under Python2
 coverage = "*"
-configparser = "*"  # for pylint under Python2
-enum34 = "*"  # for pylint dependency astroid under Python2
-nose = "*"
 pylint = "*"
-rednose = "*"
-singledispatch = "*"  # for pylint dependency astroid under Python2
-tox = "*"
 wsgi-intercept = "*"
+pytest = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.6"

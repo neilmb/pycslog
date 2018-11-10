@@ -18,141 +18,104 @@
 
 import datetime
 import json
+import re
 
-from nose.tools import assert_equal
+import pytest
 
 from pycslog.server import LOG, SqliteLog, MemoryLog, Contact
 from pycslog.webapp import app
 
 
-class TestMemoryLog:
+# parametrized tests for both log implementations
+@pytest.fixture(params=[SqliteLog, MemoryLog])
+def sqlite_log_id(request, tmpdir):
+    """Create an SQLite-backed log."""
+    try:
+        log = request.param(str(tmpdir.join('pycslog_test.db')))
+    except TypeError:
+        log = request.param()
+    log_id = log.log_contact('n0fn', '599', 14000, 'PH')
+    yield (log, log_id)
+    log.clear_log()
 
-    def setup(self):
-        """Create an SQLite-backed log."""
-        self.log = MemoryLog()
-        self.id = self.log.log_contact('n0fn', '599', 14000, 'PH')
+def test_log_contact(sqlite_log_id):
+    """Record a single contact"""
+    log, log_id = sqlite_log_id
+    assert log_id >= 0
+    assert len(log.contacts()) == 1
 
-    def test_log_contact(self):
-        """Record a single contact"""
-        assert self.id >= 0
-        assert len(self.log.contacts()) == 1
+def test_log_get_contact(sqlite_log_id):
+    """Get a contact by id"""
+    log, log_id = sqlite_log_id
+    contact = log.get_contact(log_id)
+    assert contact.time
+    assert contact.call == 'n0fn'
+    assert contact.frequency == 14000
+    assert contact.exchange == '599'
+    assert contact.mode == 'PH'
 
-    def test_get_contact(self):
-        """Get a contact by id"""
-        contact = self.log.get_contact(self.id)
-        assert contact.time
-        assert_equal(contact.call, 'n0fn')
-        assert_equal(contact.frequency, 14000)
-        assert_equal(contact.exchange, '599')
-        assert_equal(contact.mode, 'PH')
+def test_log_contacts(sqlite_log_id):
+    """List all contacts"""
+    log, log_id = sqlite_log_id
+    contacts = log.contacts()
+    assert len(contacts) == 1
 
-    def test_contacts(self):
-        """List all contacts"""
-        contacts = self.log.contacts()
-        assert_equal(len(contacts), 1)
-
-    def test_search(self):
-        """Search for a contact."""
-        assert_equal(len(self.log.search('n0')), 1)
-        assert_equal(len(self.log.search('n')), 1)
-        assert_equal(len(self.log.search('n0fnp')), 0)
-        assert_equal(len(self.log.search('')), 0)
-
-    def teardown(self):
-        """Clear the database."""
-        self.log.clear_log()
-
-class TestSqliteLog:
-
-    def setup(self):
-        """Create an SQLite-backed log."""
-        self.log = SqliteLog()
-        self.id = self.log.log_contact('n0fn', '599', 14000, 'PH')
-
-    def test_log_contact(self):
-        """Record a single contact"""
-        count = self.log.conn.cursor().execute(
-            'SELECT COUNT(*) FROM log').fetchone()[0]
-        assert self.id >= 0
-        assert count == 1, count
-
-    def test_get_contact(self):
-        """Get a contact by id"""
-        contact = self.log.get_contact(self.id)
-        assert contact.time
-        assert_equal(contact.call, 'n0fn')
-        assert_equal(contact.frequency, 14000)
-        assert_equal(contact.exchange, '599')
-        assert_equal(contact.mode, 'PH')
-
-    def test_contacts(self):
-        """List all contacts"""
-        contacts = self.log.contacts()
-        assert_equal(len(contacts), 1)
-
-    def test_search(self):
-        """Search for a contact."""
-        assert_equal(len(self.log.search('n0')), 1)
-        assert_equal(len(self.log.search('n')), 1)
-        assert_equal(len(self.log.search('n0fnp')), 0)
-        assert_equal(len(self.log.search('')), 0)
-
-    def teardown(self):
-        """Clear the database."""
-        self.log.clear_log()
-
-class TestServer:
-
-    def setup(self):
-        """Set up a test server to make requests against."""
-        self.app = app.test_client()
-        self.app.post('/api/contact',
-                      data={'call': 'k3ng',
-                            'exchange': '599'})
-
-    def teardown(self):
-        """Clear log object."""
-        LOG.clear_log()
-
-    def test_contact(self):
-        """Record a contact"""
-        result = self.app.post('/api/contact',
-                               data={'call': 'n0fn',
-                                     'exchange': '599'})
-        assert_equal(result.status_code, 200)
-
-    def test_contact_id(self):
-        """Retrieve a contact by id"""
-        result = self.app.get('/api/contact/1')
-        assert_equal(result.status_code, 200)
-        returned = json.loads(result.get_data(as_text=True))
-        assert_equal(returned['call'], 'k3ng')
-        assert_equal(returned['exchange'], '599')
-        for field in ['call', 'time', 'exchange', 'frequency', 'mode']:
-            assert field in returned
-
-    def test_contacts(self):
-        """Retrieve all contacts"""
-        result = self.app.get('/api/contacts')
-        assert_equal(result.status_code, 200)
-        returned = json.loads(result.get_data(as_text=True))
-        assert_equal(len(returned), 1)
-
-    def test_search(self):
-        """Search for a contact."""
-        result = self.app.get('/api/search/k3ng')
-        assert_equal(result.status_code, 200)
-        returned = json.loads(result.get_data(as_text=True))
-        assert_equal(len(returned), 1)
+def test_log_search(sqlite_log_id):
+    """Search for a contact."""
+    log, log_id = sqlite_log_id
+    assert len(log.search('n0')) == 1
+    assert len(log.search('n')) == 1
+    assert len(log.search('n0fnp')) == 0
+    assert len(log.search('')) == 0
 
 
-class test_contact:
+@pytest.fixture
+def app_client():
+    """Set up a test server to make requests against."""
+    _app = app.test_client()
+    _app.post('/api/contact',
+             data={'call': 'k3ng',
+                   'exchange': '599'})
+    yield _app
+    LOG.clear_log()
 
-    def test_serialize(self):
-        serialized_dict = Contact(call='n0fn',
-                                  mode='PH',
-                                  exchange='599',
-                                  time=datetime.datetime.utcnow(),
-                                  frequency=5000).serialize()
-        for field in ['call', 'mode', 'exchange', 'time', 'frequency']:
-            assert field in serialized_dict
+def test_app_contact(app_client):
+    """Record a contact"""
+    result = app_client.post('/api/contact',
+                            data={'call': 'n0fn',
+                                    'exchange': '599'})
+    assert result.status_code == 200
+
+def test_app_contact_id(app_client):
+    """Retrieve a contact by id"""
+    result = app_client.get('/api/contact/1')
+    assert result.status_code == 200
+    returned = json.loads(result.get_data(as_text=True))
+    assert returned['call'] == 'k3ng'
+    assert returned['exchange'] == '599'
+    for field in ['call', 'time', 'exchange', 'frequency', 'mode']:
+        assert field in returned
+
+def test_app_contacts(app_client):
+    """Retrieve all contacts"""
+    result = app_client.get('/api/contacts')
+    assert result.status_code == 200
+    returned = json.loads(result.get_data(as_text=True))
+    assert len(returned) == 1
+
+def test_app_search(app_client):
+    """Search for a contact."""
+    result = app_client.get('/api/search/k3ng')
+    assert result.status_code == 200
+    returned = json.loads(result.get_data(as_text=True))
+    assert len(returned) == 1
+
+
+def test_serialize_contact():
+    serialized_dict = Contact(call='n0fn',
+                                mode='PH',
+                                exchange='599',
+                                time=datetime.datetime.utcnow(),
+                                frequency=5000).serialize()
+    for field in ['call', 'mode', 'exchange', 'time', 'frequency']:
+        assert field in serialized_dict
