@@ -28,7 +28,7 @@ from six import add_metaclass
 from flask import Blueprint, request
 
 
-class Contact:  # noqa
+class Contact:
 
     """Represent a single contact."""
 
@@ -135,7 +135,7 @@ class SqliteLog(LogInterface):
         self.cursor = self.conn.cursor()
         try:
             self._create_table()
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError:  # noqa
             self.conn.rollback()
         finally:
             self.conn.commit()
